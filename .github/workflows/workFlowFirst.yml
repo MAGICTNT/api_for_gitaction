@@ -25,11 +25,34 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Cache Maven dependencies
+        env:
+          RUNNER_OS: ${{ runner.os }}
+          HASH_FILES: ${{ hashFiles('**/pom.xml') }}
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+
+          key: $RUNNER_OS-maven-$HASH_FILES
+          restore-keys: |
+            $RUNNER_OS-maven-
+
       - name: Build with Maven
         run: mvn clean install
 
       - name: Run tests
         run: mvn test
+
+  # Job pour uploader l'artefact du build
+  upload-artifact:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artefact
+          path: target/*.jar
 
   # Job pour envoyer un message lors du fork
   message-on-fork:
@@ -50,5 +73,4 @@ jobs:
         env:
           USER_LOGIN: ${{ github.event.issue.user.login }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
-
         run: echo "Bonjour $USER_LOGIN, nous avons bien pris en compte votre problème :\ $ISSUE_TITLE."
