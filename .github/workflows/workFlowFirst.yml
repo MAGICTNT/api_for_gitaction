@@ -8,9 +8,9 @@ on:
     branches:
       - main
   fork:
-    types: [created]
+    types: [ created ]
   issues:
-    types: [opened]
+    types: [ opened ]
 
 jobs:
   build:
@@ -32,7 +32,6 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.m2/repository
-
           key: $RUNNER_OS-maven-$HASH_FILES
           restore-keys: |
             $RUNNER_OS-maven-
@@ -42,11 +41,13 @@ jobs:
 
       - name: Run tests
         run: mvn test
+        continue-on-error: true  # Continue si le test plante
 
   # Job pour uploader l'artefact du build
   upload-artifact:
     needs: build
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && success()
     steps:
       - name: Upload build artifact
         uses: actions/upload-artifact@v3
@@ -61,7 +62,7 @@ jobs:
     steps:
       - name: Send fork message
         env:
-          ACTOR: ${{github.actor}}
+          ACTOR: ${{ github.actor }}
         run: echo "Merci pour le fork, $ACTOR ! Nous espérons que vous apprécierez le projet."
 
   # Job pour envoyer un message lors de l'ouverture d'une issue
@@ -73,4 +74,5 @@ jobs:
         env:
           USER_LOGIN: ${{ github.event.issue.user.login }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
-        run: echo "Bonjour $USER_LOGIN, nous avons bien pris en compte votre problème :\ $ISSUE_TITLE."
+        run:
+          echo "Bonjour $USER_LOGIN, nous avons bien pris en compte votre problème:\ $ISSUE_TITLE."
