@@ -7,15 +7,17 @@ on:
   pull_request:
     branches:
       - main
+  fork:
+    types: [created]
+  issues:
+    types: [opened]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
 
       - name: Setup JDK 17
         uses: actions/setup-java@v3
@@ -28,3 +30,25 @@ jobs:
 
       - name: Run tests
         run: mvn test
+
+  # Job pour envoyer un message lors du fork
+  message-on-fork:
+    if: github.event_name == 'fork'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send fork message
+        env:
+          ACTOR: ${{github.actor}}
+        run: echo "Merci pour le fork, $ACTOR ! Nous espérons que vous apprécierez le projet."
+
+  # Job pour envoyer un message lors de l'ouverture d'une issue
+  message-on-issue:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send issue message
+        env:
+          USER_LOGIN: ${{ github.event.issue.user.login }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+
+        run: echo "Bonjour $USER_LOGIN, nous avons bien pris en compte votre problème :\ $ISSUE_TITLE."
