@@ -1,0 +1,24 @@
+# Utilise une image officielle de .NET SDK pour la compilation
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+
+# Définir le répertoire de travail dans le conteneur
+WORKDIR /app
+
+# Copier les fichiers .csproj et restaurer les dépendances
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copier tous les autres fichiers et compiler l'application
+COPY . .
+RUN dotnet publish -c Release -o out
+
+# Utilise une image plus légère de .NET Runtime pour exécuter l'application
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/out .
+
+# Exposer le port par défaut pour les applications ASP.NET Core
+EXPOSE 80
+
+# Commande à exécuter
+ENTRYPOINT ["dotnet", "YourProject.dll"]
